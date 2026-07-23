@@ -40,6 +40,13 @@ source_extensions <- c(
   "r", "rmd", "qmd", "md", "yml", "yaml", "json", "toml", "txt", "sh"
 )
 
+# Owner-confirmed datasets that are intentionally separate from the canonical
+# SCUC Snapshot wide/long series.
+separate_dataset_filenames <- c(
+  "TEST SCUC 2004 TEA TAKS Data Grades 3-11.csv",
+  "scuc-tea-5yr-snapshot-df.xlsx"
+)
+
 excluded_directory_names <- c(
   ".git", ".Rproj.user", ".quarto", "_freeze", "_site", "renv", "packrat",
   "node_modules", "library", "history_archive", "history_review",
@@ -84,7 +91,8 @@ manifest <- manifest |>
     source_project = vapply(source_path, top_project, character(1)),
     source_exists_now = fs::file_exists(source_path),
     staged_copy_exists_now = fs::file_exists(proposed_destination),
-    staged_copy_verified = source_path %in% copy_log$source_path[copy_log$verified_copy]
+    staged_copy_verified = source_path %in% copy_log$source_path[copy_log$verified_copy],
+    is_separate_non_snapshot_dataset = source_file %in% separate_dataset_filenames
   )
 
 manifest |>
@@ -250,6 +258,8 @@ cleanup_plan <- manifest |>
     active_projects = tidyr::replace_na(active_projects, ""),
     has_active_dependency = certain_hits + likely_hits > 0L,
     cleanup_status = dplyr::case_when(
+      is_separate_non_snapshot_dataset ~
+        "RETAIN: owner confirmed this is a separate dataset outside the canonical Snapshot cleanup",
       classification == "06 canonical data set matches" & has_active_dependency ~
         "BLOCKED: update code to canonical target, test project, then archive original",
       classification == "06 canonical data set matches" ~
@@ -264,6 +274,8 @@ cleanup_plan <- manifest |>
         "ARCHIVE CANDIDATE: unmatched historical variant; manual approval required; do not delete"
     ),
     proposed_action = dplyr::case_when(
+      is_separate_non_snapshot_dataset ~
+        "retain as a separate dataset; no canonical Snapshot replacement required",
       classification == "08 datasets prior to pre-canonical set matches" & has_active_dependency ~
         "retain and investigate; no canonical replacement assumed",
       has_active_dependency ~ "replace/test before archive",
@@ -277,6 +289,7 @@ cleanup_plan <- manifest |>
   ) |>
   dplyr::select(
     classification, source_path, source_file, source_project, source_exists_now,
+    is_separate_non_snapshot_dataset,
     proposed_destination, staged_copy_exists_now, staged_copy_verified,
     recommended_canonical_target, canonical_target_exists,
     certain_hits, likely_hits, ambiguous_hits, active_code_files, active_projects,
@@ -311,15 +324,24 @@ cleanup_plan |>
 #| label: execution-queue
 
 replacement_queue <- cleanup_plan |>
-  dplyr::filter(has_active_dependency) |>
+  dplyr::filter(has_active_dependency, !is_separate_non_snapshot_dataset) |>
   dplyr::arrange(classification, source_project, source_file)
 
+separate_dataset_retention_queue <- cleanup_plan |>
+  dplyr::filter(is_separate_non_snapshot_dataset) |>
+  dplyr::arrange(source_project, source_file)
+
 archive_queue <- cleanup_plan |>
-  dplyr::filter(!has_active_dependency) |>
+  dplyr::filter(!has_active_dependency, !is_separate_non_snapshot_dataset) |>
   dplyr::arrange(classification, source_project, source_file)
 
 readr::write_csv(replacement_queue, fs::path(report_dir, "scuc_code_replacement_queue.csv"), na = "")
 readr::write_csv(archive_queue, fs::path(report_dir, "scuc_archive_candidate_queue.csv"), na = "")
+readr::write_csv(
+  separate_dataset_retention_queue,
+  fs::path(report_dir, "scuc_separate_dataset_retention_queue.csv"),
+  na = ""
+)
 
 replacement_queue
 ```
