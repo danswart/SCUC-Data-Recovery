@@ -147,25 +147,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># SCUC Snapshot wide/long series.</span></span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>separate_dataset_filenames <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"TEST SCUC 2004 TEA TAKS Data Grades 3-11.csv"</span>,</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"scuc-tea-5yr-snapshot-df.xlsx"</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>excluded_directory_names <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">".git"</span>, <span class="st">".Rproj.user"</span>, <span class="st">".quarto"</span>, <span class="st">"_freeze"</span>, <span class="st">"_site"</span>, <span class="st">"renv"</span>, <span class="st">"packrat"</span>,</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"node_modules"</span>, <span class="st">"library"</span>, <span class="st">"history_archive"</span>, <span class="st">"history_review"</span>,</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"SCUC_discovery_review"</span>, <span class="st">"04 project inventory outputs"</span>,</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">"05 dependency and cleanup reports"</span>, <span class="st">"06 canonical data set matches"</span>,</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"07 pre-canonical set matches"</span>, <span class="st">"08 datasets prior to pre-canonical set matches"</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>fs<span class="sc">::</span><span class="fu">file_exists</span>(manifest_path)) <span class="fu">stop</span>(<span class="st">"Missing approved manifest: "</span>, manifest_path)</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>fs<span class="sc">::</span><span class="fu">file_exists</span>(copy_log_path)) <span class="fu">stop</span>(<span class="st">"Missing verified copy log: "</span>, copy_log_path)</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>fs<span class="sc">::</span><span class="fu">dir_create</span>(report_dir, <span class="at">recurse =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">setting =</span> <span class="fu">c</span>(<span class="st">"Search root"</span>, <span class="st">"Manifest"</span>, <span class="st">"Report folder"</span>),</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(search_root, manifest_path, report_dir)</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"scuc-tea-5yr-snapshot-df.xlsx"</span>,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"scuc-tea-5yr-2017-2021 snapshots.xlsx"</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>excluded_directory_names <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">".git"</span>, <span class="st">".Rproj.user"</span>, <span class="st">".quarto"</span>, <span class="st">"_freeze"</span>, <span class="st">"_site"</span>, <span class="st">"renv"</span>, <span class="st">"packrat"</span>,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"node_modules"</span>, <span class="st">"library"</span>, <span class="st">"history_archive"</span>, <span class="st">"history_review"</span>,</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">"SCUC_discovery_review"</span>, <span class="st">"04 project inventory outputs"</span>,</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"05 dependency and cleanup reports"</span>, <span class="st">"06 canonical data set matches"</span>,</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="st">"07 pre-canonical set matches"</span>, <span class="st">"08 datasets prior to pre-canonical set matches"</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>fs<span class="sc">::</span><span class="fu">file_exists</span>(manifest_path)) <span class="fu">stop</span>(<span class="st">"Missing approved manifest: "</span>, manifest_path)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>fs<span class="sc">::</span><span class="fu">file_exists</span>(copy_log_path)) <span class="fu">stop</span>(<span class="st">"Missing verified copy log: "</span>, copy_log_path)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>fs<span class="sc">::</span><span class="fu">dir_create</span>(report_dir, <span class="at">recurse =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">setting =</span> <span class="fu">c</span>(<span class="st">"Search root"</span>, <span class="st">"Manifest"</span>, <span class="st">"Report folder"</span>),</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(search_root, manifest_path, report_dir)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div data-pagedtable="false">
@@ -212,7 +213,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output-display">
 <div data-pagedtable="false">
   <script data-pagedtable-source="" type="application/json">
-{"columns":[{"label":["classification"],"name":[1],"type":["chr"],"align":["left"]},{"label":["source_exists_now"],"name":[2],"type":["lgl"],"align":["right"]},{"label":["staged_copy_exists_now"],"name":[3],"type":["lgl"],"align":["right"]},{"label":["staged_copy_verified"],"name":[4],"type":["lgl"],"align":["right"]},{"label":["n"],"name":[5],"type":["int"],"align":["right"]}],"data":[{"1":"06 canonical data set matches","2":"FALSE","3":"TRUE","4":"TRUE","5":"1"},{"1":"06 canonical data set matches","2":"TRUE","3":"TRUE","4":"TRUE","5":"10"},{"1":"07 pre-canonical set matches","2":"TRUE","3":"TRUE","4":"TRUE","5":"4"},{"1":"08 datasets prior to pre-canonical set matches","2":"FALSE","3":"TRUE","4":"TRUE","5":"1"},{"1":"08 datasets prior to pre-canonical set matches","2":"TRUE","3":"TRUE","4":"TRUE","5":"23"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["classification"],"name":[1],"type":["chr"],"align":["left"]},{"label":["source_exists_now"],"name":[2],"type":["lgl"],"align":["right"]},{"label":["staged_copy_exists_now"],"name":[3],"type":["lgl"],"align":["right"]},{"label":["staged_copy_verified"],"name":[4],"type":["lgl"],"align":["right"]},{"label":["n"],"name":[5],"type":["int"],"align":["right"]}],"data":[{"1":"06 canonical data set matches","2":"FALSE","3":"TRUE","4":"TRUE","5":"11"},{"1":"07 pre-canonical set matches","2":"FALSE","3":"TRUE","4":"TRUE","5":"4"},{"1":"08 datasets prior to pre-canonical set matches","2":"FALSE","3":"TRUE","4":"TRUE","5":"19"},{"1":"08 datasets prior to pre-canonical set matches","2":"TRUE","3":"TRUE","4":"TRUE","5":"5"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 </div>
@@ -453,7 +454,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output-display">
 <div data-pagedtable="false">
   <script data-pagedtable-source="" type="application/json">
-{"columns":[{"label":["classification"],"name":[1],"type":["chr"],"align":["left"]},{"label":["has_active_dependency"],"name":[2],"type":["lgl"],"align":["right"]},{"label":["cleanup_status"],"name":[3],"type":["chr"],"align":["left"]},{"label":["n"],"name":[4],"type":["int"],"align":["right"]}],"data":[{"1":"08 datasets prior to pre-canonical set matches","2":"FALSE","3":"ARCHIVE CANDIDATE: unmatched historical variant; manual approval required; do not delete","4":"20"},{"1":"06 canonical data set matches","2":"FALSE","3":"READY FOR ARCHIVE after backup approval; exact canonical replacement exists","4":"11"},{"1":"07 pre-canonical set matches","2":"FALSE","3":"READY FOR ARCHIVE after backup approval; reference predecessor remains in folder 02","4":"4"},{"1":"08 datasets prior to pre-canonical set matches","2":"TRUE","3":"RETAIN: owner confirmed this is a separate dataset outside the canonical Snapshot cleanup","4":"3"},{"1":"08 datasets prior to pre-canonical set matches","2":"FALSE","3":"RETAIN: owner confirmed this is a separate dataset outside the canonical Snapshot cleanup","4":"1"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["classification"],"name":[1],"type":["chr"],"align":["left"]},{"label":["has_active_dependency"],"name":[2],"type":["lgl"],"align":["right"]},{"label":["cleanup_status"],"name":[3],"type":["chr"],"align":["left"]},{"label":["n"],"name":[4],"type":["int"],"align":["right"]}],"data":[{"1":"08 datasets prior to pre-canonical set matches","2":"FALSE","3":"ARCHIVE CANDIDATE: unmatched historical variant; manual approval required; do not delete","4":"19"},{"1":"06 canonical data set matches","2":"FALSE","3":"READY FOR ARCHIVE after backup approval; exact canonical replacement exists","4":"11"},{"1":"07 pre-canonical set matches","2":"FALSE","3":"READY FOR ARCHIVE after backup approval; reference predecessor remains in folder 02","4":"4"},{"1":"08 datasets prior to pre-canonical set matches","2":"TRUE","3":"RETAIN: owner confirmed this is a separate dataset outside the canonical Snapshot cleanup","4":"3"},{"1":"08 datasets prior to pre-canonical set matches","2":"FALSE","3":"RETAIN: owner confirmed this is a separate dataset outside the canonical Snapshot cleanup","4":"2"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 </div>
@@ -465,7 +466,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>replacement_queue <span class="ot">&lt;-</span> cleanup_plan <span class="sc">|&gt;</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(has_active_dependency, <span class="sc">!</span>is_separate_non_snapshot_dataset) <span class="sc">|&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(source_exists_now, has_active_dependency, <span class="sc">!</span>is_separate_non_snapshot_dataset) <span class="sc">|&gt;</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">arrange</span>(classification, source_project, source_file)</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>separate_dataset_retention_queue <span class="ot">&lt;-</span> cleanup_plan <span class="sc">|&gt;</span></span>
@@ -473,18 +474,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">arrange</span>(source_project, source_file)</span>
 <span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>archive_queue <span class="ot">&lt;-</span> cleanup_plan <span class="sc">|&gt;</span></span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>has_active_dependency, <span class="sc">!</span>is_separate_non_snapshot_dataset) <span class="sc">|&gt;</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(source_exists_now, <span class="sc">!</span>has_active_dependency, <span class="sc">!</span>is_separate_non_snapshot_dataset) <span class="sc">|&gt;</span></span>
 <span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">arrange</span>(classification, source_project, source_file)</span>
 <span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>readr<span class="sc">::</span><span class="fu">write_csv</span>(replacement_queue, fs<span class="sc">::</span><span class="fu">path</span>(report_dir, <span class="st">"scuc_code_replacement_queue.csv"</span>), <span class="at">na =</span> <span class="st">""</span>)</span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>readr<span class="sc">::</span><span class="fu">write_csv</span>(archive_queue, fs<span class="sc">::</span><span class="fu">path</span>(report_dir, <span class="st">"scuc_archive_candidate_queue.csv"</span>), <span class="at">na =</span> <span class="st">""</span>)</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>readr<span class="sc">::</span><span class="fu">write_csv</span>(</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  separate_dataset_retention_queue,</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>  fs<span class="sc">::</span><span class="fu">path</span>(report_dir, <span class="st">"scuc_separate_dataset_retention_queue.csv"</span>),</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">na =</span> <span class="st">""</span></span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>replacement_queue</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>completed_cleanup <span class="ot">&lt;-</span> cleanup_plan <span class="sc">|&gt;</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>source_exists_now, staged_copy_verified, <span class="sc">!</span>is_separate_non_snapshot_dataset) <span class="sc">|&gt;</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">arrange</span>(classification, source_project, source_file)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>readr<span class="sc">::</span><span class="fu">write_csv</span>(replacement_queue, fs<span class="sc">::</span><span class="fu">path</span>(report_dir, <span class="st">"scuc_code_replacement_queue.csv"</span>), <span class="at">na =</span> <span class="st">""</span>)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>readr<span class="sc">::</span><span class="fu">write_csv</span>(archive_queue, fs<span class="sc">::</span><span class="fu">path</span>(report_dir, <span class="st">"scuc_archive_candidate_queue.csv"</span>), <span class="at">na =</span> <span class="st">""</span>)</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>readr<span class="sc">::</span><span class="fu">write_csv</span>(completed_cleanup, fs<span class="sc">::</span><span class="fu">path</span>(report_dir, <span class="st">"scuc_completed_cleanup.csv"</span>), <span class="at">na =</span> <span class="st">""</span>)</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>readr<span class="sc">::</span><span class="fu">write_csv</span>(</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>  separate_dataset_retention_queue,</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>  fs<span class="sc">::</span><span class="fu">path</span>(report_dir, <span class="st">"scuc_separate_dataset_retention_queue.csv"</span>),</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">na =</span> <span class="st">""</span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>replacement_queue</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div data-pagedtable="false">

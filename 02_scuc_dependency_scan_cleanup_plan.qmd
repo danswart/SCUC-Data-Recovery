@@ -44,7 +44,8 @@ source_extensions <- c(
 # SCUC Snapshot wide/long series.
 separate_dataset_filenames <- c(
   "TEST SCUC 2004 TEA TAKS Data Grades 3-11.csv",
-  "scuc-tea-5yr-snapshot-df.xlsx"
+  "scuc-tea-5yr-snapshot-df.xlsx",
+  "scuc-tea-5yr-2017-2021 snapshots.xlsx"
 )
 
 excluded_directory_names <- c(
@@ -324,7 +325,7 @@ cleanup_plan |>
 #| label: execution-queue
 
 replacement_queue <- cleanup_plan |>
-  dplyr::filter(has_active_dependency, !is_separate_non_snapshot_dataset) |>
+  dplyr::filter(source_exists_now, has_active_dependency, !is_separate_non_snapshot_dataset) |>
   dplyr::arrange(classification, source_project, source_file)
 
 separate_dataset_retention_queue <- cleanup_plan |>
@@ -332,11 +333,16 @@ separate_dataset_retention_queue <- cleanup_plan |>
   dplyr::arrange(source_project, source_file)
 
 archive_queue <- cleanup_plan |>
-  dplyr::filter(!has_active_dependency, !is_separate_non_snapshot_dataset) |>
+  dplyr::filter(source_exists_now, !has_active_dependency, !is_separate_non_snapshot_dataset) |>
+  dplyr::arrange(classification, source_project, source_file)
+
+completed_cleanup <- cleanup_plan |>
+  dplyr::filter(!source_exists_now, staged_copy_verified, !is_separate_non_snapshot_dataset) |>
   dplyr::arrange(classification, source_project, source_file)
 
 readr::write_csv(replacement_queue, fs::path(report_dir, "scuc_code_replacement_queue.csv"), na = "")
 readr::write_csv(archive_queue, fs::path(report_dir, "scuc_archive_candidate_queue.csv"), na = "")
+readr::write_csv(completed_cleanup, fs::path(report_dir, "scuc_completed_cleanup.csv"), na = "")
 readr::write_csv(
   separate_dataset_retention_queue,
   fs::path(report_dir, "scuc_separate_dataset_retention_queue.csv"),
