@@ -1,0 +1,143 @@
+---
+title: "Stage SCUC Classified Copies"
+subtitle: "Copy reviewed source files into 06, 07, and 08 without altering originals"
+format:
+  html:
+    toc: true
+    code-fold: true
+    df-print: paged
+execute:
+  warning: false
+  message: false
+  error: false
+editor: source
+---
+
+## Safety model
+
+This workbook consumes the manifest created by `00_scuc_dataset_match_audit.qmd`. It only copies files; it never moves, renames, or deletes originals. Relative source paths are preserved beneath each classification folder, avoiding collisions and retaining provenance.
+
+The default is a dry run. Before enabling copies, review `04 project inventory outputs/scuc_dataset_match_manifest.csv`, especially every row assigned to `08 datasets prior to pre-canonical set matches`.
+
+## 1. Settings and manifest validation
+
+```{r}
+#| label: settings
+
+recovery_root <- fs::path_abs(getwd())
+
+search_root <- fs::path_abs(fs::path(recovery_root, ".."))
+
+manifest_path <- fs::path(recovery_root, "04 project inventory outputs", "scuc_dataset_match_manifest.csv")
+
+copy_log_path <- fs::path(recovery_root, "04 project inventory outputs", "scuc_dataset_copy_log.csv")
+
+dry_run <- FALSE
+
+overwrite_existing <- FALSE
+
+if (!fs::file_exists(manifest_path)) {
+  stop("Run 00_scuc_dataset_match_audit.qmd first. Missing manifest: ", manifest_path)
+}
+
+manifest <- readr::read_csv(manifest_path, show_col_types = FALSE, progress = FALSE)
+
+required <- c("classification", "source_path", "byte_sha256", "copy_eligible", "proposed_destination")
+
+missing_columns <- setdiff(required, names(manifest))
+if (length(missing_columns)) stop("Manifest is missing: ", paste(missing_columns, collapse = ", "))
+
+allowed_classes <- c(
+  "06 canonical data set matches", "07 pre-canonical set matches",
+  "08 datasets prior to pre-canonical set matches"
+)
+if (any(!manifest$classification %in% allowed_classes)) stop("Manifest contains an unknown classification")
+
+copy_plan <- manifest |>
+  dplyr::filter(copy_eligible) |>
+  dplyr::mutate(
+    source_now_exists = fs::file_exists(source_path),
+    source_hash_now = vapply(source_path, function(p) {
+      if (fs::file_exists(p)) digest::digest(file = p, algo = "sha256") else NA_character_
+    }, character(1)),
+    source_unchanged_since_audit = source_now_exists & source_hash_now == byte_sha256,
+    destination_is_inside_class_folder = vapply(seq_len(dplyr::n()), function(i) {
+      startsWith(fs::path_abs(proposed_destination[i]),
+                 paste0(fs::path(recovery_root, classification[i]), "/"))
+    }, logical(1)),
+    destination_exists_before = fs::file_exists(proposed_destination),
+    action = dplyr::case_when(
+      !source_now_exists ~ "SKIP: source missing",
+      !source_unchanged_since_audit ~ "SKIP: source changed since audit",
+      !destination_is_inside_class_folder ~ "SKIP: unsafe destination",
+      destination_exists_before & !overwrite_existing ~ "SKIP: destination exists",
+      dry_run ~ "DRY RUN: would copy",
+      TRUE ~ "COPY"
+    )
+  )
+
+copy_plan |>
+  dplyr::count(classification, action, sort = TRUE)
+
+```
+
+
+
+
+## 2. Copy eligible files
+
+Set `dry_run <- FALSE` only after reviewing the plan above. Re-running is safe by default because existing destinations are skipped.
+
+```{r}
+#| label: copy
+
+if (!dry_run) {
+  for (i in which(copy_plan$action == "COPY")) {
+    fs::dir_create(fs::path_dir(copy_plan$proposed_destination[i]), recurse = TRUE)
+    copy_error <- tryCatch({
+      fs::file_copy(copy_plan$source_path[i], copy_plan$proposed_destination[i],
+                    overwrite = overwrite_existing)
+      NA_character_
+    }, error = function(e) conditionMessage(e))
+    copy_plan$action[i] <- if (is.na(copy_error)) {
+      "COPIED; pending hash verification"
+    } else {
+      paste0("COPY FAILED: ", copy_error)
+    }
+  }
+}
+
+copy_plan <- copy_plan |>
+  dplyr::mutate(
+    destination_exists_after = fs::file_exists(proposed_destination),
+    destination_hash_after = vapply(proposed_destination, function(p) {
+      if (fs::file_exists(p)) digest::digest(file = p, algo = "sha256") else NA_character_
+    }, character(1)),
+    verified_copy = destination_exists_after & destination_hash_after == byte_sha256,
+    action = dplyr::case_when(
+      verified_copy & grepl("^COPIED", action) ~ "COPIED AND VERIFIED",
+      !verified_copy & grepl("^COPIED", action) ~ "COPY COMPLETED BUT HASH VERIFICATION FAILED",
+      TRUE ~ action
+    ),
+    run_time = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
+    was_dry_run = dry_run
+  )
+
+readr::write_csv(copy_plan, copy_log_path, na = "")
+copy_plan |>
+  dplyr::count(classification, action, verified_copy, sort = TRUE)
+
+```
+
+
+
+
+## After staging
+
+Use the staged folders as a comparison/archive workspace:
+
+- In **06**, replace use of each duplicate with the manifest’s named canonical reference.
+- In **07**, preserve one documented pre-canonical predecessor where historical provenance matters.
+- Review **08** manually. This workflow intentionally does not delete it or assert that unmatched means disposable.
+- Delete or archive original files only as a separate, deliberate operation after the copy log shows `verified_copy = TRUE` and you have a backup.
+

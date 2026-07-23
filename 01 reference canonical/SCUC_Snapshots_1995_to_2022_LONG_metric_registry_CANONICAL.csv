@@ -1,0 +1,153 @@
+grouping,sort,section,units,grade,level_achieved
+Total Students in District,1,District_Perform,count,All,NA
+Percent Tested,1,SAT_ACT,percent_of_students,All,NA
+Annual Dropout Rate,10,District_Perform,rate,All,NA
+Annual Dropout Rate Gr 9-12,11,District_Perform,rate,All,NA
+Four-year Dropout Rate,12,District_Perform,rate,All,NA
+Exit-Level Cumulative Pass Rate,13,District_Perform,score,All,NA
+Total Number of Schools,2,District_Perform,count,All,NA
+Percent At Or Above Criterion,2,SAT_ACT,percent_of_students,All,NA
+Attendance Rate,3,District_Perform,rate,All,NA
+SAT-Mean Total Score,3,SAT_ACT,score,All,NA
+Completion Rate,4,District_Perform,rate,All,NA
+ACT-Mean Composite Score,4,SAT_ACT,score,All,NA
+Annual Graduate Count,5,District_Perform,count,All,NA
+Annual RHSP-DAP-FHSP-E-FHSP-DLA Graduate Count,6,District_Perform,count,All,NA
+4-Year Longitudinal Graduation Rate,7,District_Perform,rate,All,NA
+Number of Students Per Total Staff,7,Staff,count,All,NA
+5-Year Longitudinal Graduation Rate,8,District_Perform,rate,All,NA
+Number of Students Per Teacher,8,Staff,count,All,NA
+6-Year Longitudinal Graduation Rate,9,District_Perform,rate,All,NA
+White,E1,Standardized_Scores,score,All,Approaches_or_Above
+White,E1,Standardized_Scores,score,All,Failing
+White,E1,Standardized_Scores,score,All,Masters
+White,E1,Standardized_Scores,score,All,Meets_or_Above
+White,E1,Students,percent_of_students,All,NA
+White,E1,Teachers,percent_of_teachers,All,NA
+Hispanic,E2,Standardized_Scores,score,All,Approaches_or_Above
+Hispanic,E2,Standardized_Scores,score,All,Failing
+Hispanic,E2,Standardized_Scores,score,All,Masters
+Hispanic,E2,Standardized_Scores,score,All,Meets_or_Above
+Hispanic,E2,Students,percent_of_students,All,NA
+Hispanic,E2,Teachers,percent_of_teachers,All,NA
+African American,E3,Standardized_Scores,score,All,Approaches_or_Above
+African American,E3,Standardized_Scores,score,All,Failing
+African American,E3,Standardized_Scores,score,All,Masters
+African American,E3,Standardized_Scores,score,All,Meets_or_Above
+African American,E3,Students,percent_of_students,All,NA
+African American,E3,Teachers,percent_of_teachers,All,NA
+American Indian,E4,Standardized_Scores,score,All,Approaches_or_Above
+American Indian,E4,Standardized_Scores,score,All,Failing
+American Indian,E4,Standardized_Scores,score,All,Masters
+American Indian,E4,Standardized_Scores,score,All,Meets_or_Above
+American Indian,E4,Students,percent_of_students,All,NA
+American Indian,E4,Teachers,percent_of_teachers,All,NA
+Asian,E5,Standardized_Scores,score,All,Approaches_or_Above
+Asian,E5,Standardized_Scores,score,All,Failing
+Asian,E5,Standardized_Scores,score,All,Masters
+Asian,E5,Standardized_Scores,score,All,Meets_or_Above
+Asian,E5,Students,percent_of_students,All,NA
+Asian,E5,Teachers,percent_of_teachers,All,NA
+Pacific Islander,E6,Standardized_Scores,score,All,Approaches_or_Above
+Pacific Islander,E6,Standardized_Scores,score,All,Failing
+Pacific Islander,E6,Standardized_Scores,score,All,Masters
+Pacific Islander,E6,Standardized_Scores,score,All,Meets_or_Above
+Pacific Islander,E6,Students,percent_of_students,All,NA
+Pacific Islander,E6,Teachers,percent_of_teachers,All,NA
+2 or More Races,E7,Standardized_Scores,score,All,Approaches_or_Above
+2 or More Races,E7,Standardized_Scores,score,All,Failing
+2 or More Races,E7,Standardized_Scores,score,All,Masters
+2 or More Races,E7,Standardized_Scores,score,All,Meets_or_Above
+2 or More Races,E7,Students,percent_of_students,All,NA
+Two or More Races,E7,Teachers,percent_of_teachers,All,NA
+Instructional,EC1,Expenses,percent_of_exp,All,NA
+Central Administrative,EC2,Expenses,percent_of_exp,All,NA
+Campus Administrative-School Leadership,EC3,Expenses,percent_of_exp,All,NA
+Plant Services,EC4,Expenses,percent_of_exp,All,NA
+Other Operating,EC5,Expenses,percent_of_exp,All,NA
+Non-Operating,EC6,Expenses,percent_of_exp,All,NA
+Total Expenditures,EXP1,Expenses,dollars,All,NA
+Total Instructional Expenditures,EXP10,Expenses,dollars,All,NA
+Total Instructional ExpendPer Pupil,EXP11,Expenses,dollars,All,NA
+Total Operating Expenditures,EXP2,Expenses,dollars,All,NA
+Total Operating Expend Per Pupil,EXP3,Expenses,dollars,All,NA
+Fund Balance-EOY,FB1,Fund_Balances,dollars,All,NA
+Fund Balance of Budget,FB2,Fund_Balances,dollars,All,NA
+Economically Disadvantaged,MISC1,Students,percent_of_students,All,NA
+English Language Learners (ELL),MISC2,Students,percent_of_students,All,NA
+Special Education,MISC3,Students,percent_of_students,All,NA
+Bilingual-ESL Education,MISC4,Students,percent_of_students,All,NA
+Career and Technology Ed,MISC5,Students,percent_of_students,All,NA
+Gifted and Talented Ed,MISC6,Students,percent_of_students,All,NA
+Economically Disadvantaged,O1,Standardized_Scores,score,All,Approaches_or_Above
+Economically Disadvantaged,O1,Standardized_Scores,score,All,Failing
+Economically Disadvantaged,O1,Standardized_Scores,score,All,Masters
+Economically Disadvantaged,O1,Standardized_Scores,score,All,Meets_or_Above
+SDAA Met ARD,O2,Standardized_Scores,score,All,Approaches_or_Above
+SDAA Met ARD,O2,Standardized_Scores,score,All,Failing
+Regular Education,PROGE1,Expenses,percent_of_prog_exp,All,NA
+Un-Allocated Expenditures,PROGE10,Expenses,percent_of_prog_exp,All,NA
+Special Education,PROGE2,Expenses,percent_of_prog_exp,All,NA
+Compensatory-Accelerated Education,PROGE3,Expenses,percent_of_prog_exp,All,NA
+Bilingual-ESL Education,PROGE4,Expenses,percent_of_prog_exp,All,NA
+Career and Technology Education,PROGE5,Expenses,percent_of_prog_exp,All,NA
+Gifted and Talented Education,PROGE6,Expenses,percent_of_prog_exp,All,NA
+Athletics-Related Activities,PROGE7,Expenses,percent_of_prog_exp,All,NA
+High School Allotment,PROGE8,Expenses,percent_of_prog_exp,All,NA
+Prekindergarten,PROGE9,Expenses,percent_of_prog_exp,All,NA
+State,SOURCE1,Taxes_and_Revenues,percent_of_total_funding,All,NA
+Local and Other,SOURCE2,Taxes_and_Revenues,percent_of_total_funding,All,NA
+Federal,SOURCE3,Taxes_and_Revenues,percent_of_total_funding,All,NA
+Total Staff FTE,STAFF1,Staff,count,All,NA
+Total Teacher FTE,STAFF2,Staff,count,All,NA
+Average Central Administr Salary,STAFF3,Staff,dollars,All,NA
+Average School Administr Salary,STAFF4,Staff,dollars,All,NA
+Average Profess Support Staff Salary,STAFF5,Staff,dollars,All,NA
+Average Teacher Salary,STAFF6,Staff,dollars,All,NA
+Minority,STAFF7,Staff,percent_of_staff,All,NA
+Central Administrative,STAFFUNC1,Staff,percent_of_staff,All,NA
+School Administrative,STAFFUNC2,Staff,percent_of_staff,All,NA
+Professional Support Staff,STAFFUNC3,Staff,percent_of_staff,All,NA
+Teachers,STAFFUNC4,Staff,percent_of_staff,All,NA
+Educational Aides,STAFFUNC5,Staff,percent_of_staff,All,NA
+Auxiliary Staff,STAFFUNC6,Staff,percent_of_staff,All,NA
+All Subjects,SUBJ1,Standardized_Scores,score,All,Approaches_or_Above
+All Subjects,SUBJ1,Standardized_Scores,score,All,Failing
+All Subjects,SUBJ1,Standardized_Scores,score,All,Masters
+All Subjects,SUBJ1,Standardized_Scores,score,All,Meets_or_Above
+Reading-ELA,SUBJ2,Standardized_Scores,score,All,Approaches_or_Above
+Reading-ELA,SUBJ2,Standardized_Scores,score,All,Failing
+Reading-ELA,SUBJ2,Standardized_Scores,score,All,Masters
+Reading-ELA,SUBJ2,Standardized_Scores,score,All,Meets_or_Above
+Writing,SUBJ3,Standardized_Scores,score,All,Approaches_or_Above
+Writing,SUBJ3,Standardized_Scores,score,All,Failing
+Writing,SUBJ3,Standardized_Scores,score,All,Masters
+Writing,SUBJ3,Standardized_Scores,score,All,Meets_or_Above
+Mathematics,SUBJ4,Standardized_Scores,score,All,Approaches_or_Above
+Mathematics,SUBJ4,Standardized_Scores,score,All,Failing
+Mathematics,SUBJ4,Standardized_Scores,score,All,Masters
+Mathematics,SUBJ4,Standardized_Scores,score,All,Meets_or_Above
+Science,SUBJ5,Standardized_Scores,score,All,Approaches_or_Above
+Science,SUBJ5,Standardized_Scores,score,All,Failing
+Science,SUBJ5,Standardized_Scores,score,All,Masters
+Science,SUBJ5,Standardized_Scores,score,All,Meets_or_Above
+Social Studies,SUBJ6,Standardized_Scores,score,All,Approaches_or_Above
+Social Studies,SUBJ6,Standardized_Scores,score,All,Failing
+Social Studies,SUBJ6,Standardized_Scores,score,All,Masters
+Social Studies,SUBJ6,Standardized_Scores,score,All,Meets_or_Above
+With 5 or Fewer Years Experience,TQUAL1,Teachers,percent_of_teachers,All,NA
+Average Years of Experience,TQUAL2,Teachers,count,All,NA
+With Advanced Degrees,TQUAL3,Teachers,percent_of_teachers,All,NA
+Teacher Turnover Rate,TQUAL4,Teachers,rate,All,NA
+Taxable Value Per Pupil,TR1,Taxes_and_Revenues,dollars,All,NA
+Locally Adopted Tax Rate,TR2,Taxes_and_Revenues,rate,All,NA
+Total Revenue,TR3,Taxes_and_Revenues,dollars,All,NA
+Total Revenue Per Pupil,TR4,Taxes_and_Revenues,dollars,All,NA
+Total Operating Revenue,TR5,Taxes_and_Revenues,dollars,All,NA
+Total Other Revenue,TR9,Taxes_and_Revenues,dollars,All,NA
+Regular Education,TTYPE1,Teachers,percent_of_teachers,All,NA
+Special Education,TTYPE2,Teachers,percent_of_teachers,All,NA
+Compensatory Education,TTYPE3,Teachers,percent_of_teachers,All,NA
+Bilingual-ESL Education,TTYPE4,Teachers,percent_of_teachers,All,NA
+Career and Technology Education,TTYPE5,Teachers,percent_of_teachers,All,NA
+Other Education-Includes G and T,TTYPE6,Teachers,percent_of_teachers,All,NA

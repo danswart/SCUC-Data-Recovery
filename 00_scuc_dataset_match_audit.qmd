@@ -1,0 +1,361 @@
+---
+title: "SCUC Dataset Match Audit"
+subtitle: "Find every plausible SCUC Snapshot dataset and compare it with the canonical ladder"
+format:
+  html:
+    toc: true
+    code-fold: true
+    df-print: paged
+execute:
+  warning: false
+  message: false
+  error: false
+editor: source
+---
+
+## What this workbook does
+
+This is the read-only half of the recovery workflow. It searches the entire R working directory, identifies plausible **SCUC Snapshot** datasets by filename and structure, reads every supported table or workbook sheet, and compares normalized table content with every file in:
+
+- `01 reference canonical`
+- `02 reference pre-canonical`
+
+It writes an auditable manifest to `04 project inventory outputs`. It never copies, moves, renames, overwrites, or deletes source data. Run `01_scuc_stage_classified_copies.qmd` only after reviewing the manifest.
+
+The word **exact** below means exact normalized table content: same columns, rows, and cell values after harmless representation differences are removed (column/row order, surrounding whitespace, common missing-value spellings, and numeric formatting such as `2` versus `2.0`). A byte-for-byte SHA-256 match is also reported separately.
+
+## 1. Settings
+
+```{r}
+#| label: settings
+
+# Required packages: dplyr, fs, readr, readxl, digest, tibble, stringr, tidyr
+
+recovery_root <- fs::path_abs(getwd())
+search_root <- fs::path_abs(fs::path(recovery_root, ".."))
+canonical_dir <- fs::path(recovery_root, "01 reference canonical")
+precanonical_dir <- fs::path(recovery_root, "02 reference pre-canonical")
+output_dir <- fs::path(recovery_root, "04 project inventory outputs")
+
+supported_extensions <- c("csv", "tsv", "xlsx", "xls", "xlsm", "rds")
+
+# These directories are generated, installed, cached, or already staged.
+excluded_directory_names <- c(
+  ".git", ".Rproj.user", ".quarto", "_freeze", "_site", "renv",
+  "packrat", "node_modules", "library", "history_archive",
+  "06 canonical data set matches", "07 pre-canonical set matches",
+  "08 datasets prior to pre-canonical set matches"
+)
+
+if (!fs::dir_exists(search_root)) stop("Search root does not exist: ", search_root)
+if (!fs::dir_exists(canonical_dir)) stop("Canonical folder does not exist: ", canonical_dir)
+if (!fs::dir_exists(precanonical_dir)) stop("Pre-canonical folder does not exist: ", precanonical_dir)
+fs::dir_create(output_dir, recurse = TRUE)
+
+tibble::tibble(setting = c("Search root", "Recovery root", "Output folder"),
+               value = c(search_root, recovery_root, output_dir))
+```
+
+## 2. Comparison helpers
+
+Each Excel sheet is treated as a separate table. A workbook is assigned its best matching sheet, while the sheet-level results remain in the detailed report.
+
+```{r}
+#| label: helpers
+
+clean_name <- function(x) {
+  x |>
+    enc2utf8() |>
+    trimws() |>
+    tolower() |>
+    gsub("^\\ufeff", "", x = _) |>
+    gsub("[^a-z0-9]+", "_", x = _) |>
+    gsub("^_|_$", "", x = _)
+}
+
+normalize_cell <- function(x) {
+  y <- trimws(enc2utf8(as.character(x)))
+  missing <- is.na(y) | tolower(y) %in% c("", "na", "n/a", "null", "nan", "#n/a")
+  numeric_like <- !missing & grepl("^[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$", y, perl = TRUE)
+  if (any(numeric_like)) {
+    z <- suppressWarnings(as.numeric(y[numeric_like]))
+    y[numeric_like] <- format(z, scientific = FALSE, trim = TRUE, digits = 15)
+  }
+  y[missing] <- "<NA>"
+  y
+}
+
+normalize_table <- function(x) {
+  x <- as.data.frame(x, stringsAsFactors = FALSE, check.names = FALSE)
+  names(x) <- make.unique(clean_name(names(x)), sep = "__duplicate_")
+  x[] <- lapply(x, normalize_cell)
+  x <- x[, order(names(x)), drop = FALSE]
+  if (nrow(x)) {
+    row_text <- do.call(paste, c(unname(x), list(sep = "\u001f")))
+    x <- x[order(row_text, method = "radix"), , drop = FALSE]
+  }
+  rownames(x) <- NULL
+  x
+}
+
+table_fingerprint <- function(x) {
+  digest::digest(serialize(normalize_table(x), NULL, version = 2), algo = "sha256")
+}
+
+read_tables <- function(path) {
+  ext <- tolower(fs::path_ext(path))
+  tryCatch({
+    if (ext %in% c("csv", "tsv")) {
+      delim <- if (ext == "tsv") "\t" else ","
+      list(data = readr::read_delim(path, delim = delim, col_types = readr::cols(.default = "c"),
+                                    name_repair = "minimal", progress = FALSE, show_col_types = FALSE,
+                                    trim_ws = FALSE))
+    } else if (ext == "xls") {
+      stop("Legacy .xls retained for manual review; not parsed automatically")
+    } else if (ext %in% c("xlsx", "xlsm")) {
+      sheets <- readxl::excel_sheets(path)
+      stats::setNames(lapply(sheets, function(s) {
+        readxl::read_excel(path, sheet = s, col_types = "text", .name_repair = "minimal")
+      }), sheets)
+    } else if (ext == "rds") {
+      object <- readRDS(path)
+      if (!is.data.frame(object)) stop("RDS object is not a data frame")
+      list(data = object)
+    } else stop("Unsupported extension")
+  }, error = function(e) structure(list(), read_error = conditionMessage(e)))
+}
+
+profile_table <- function(x) {
+  nm <- clean_name(names(x))
+  has_year_columns <- sum(grepl("^(19|20)[0-9]{2}$", nm)) >= 3L
+  has_long_pair <- any(nm %in% c("date", "year")) && "value" %in% nm
+  identity_columns <- c("grouping", "section", "sort", "units", "grade", "level_achieved")
+  tibble::tibble(
+    rows = nrow(x), columns = ncol(x),
+    normalized_columns = paste(sort(nm), collapse = ";"),
+    identity_column_count = sum(identity_columns %in% nm),
+    has_year_columns = has_year_columns,
+    has_long_pair = has_long_pair,
+    structural_snapshot_signal = sum(identity_columns %in% nm) >= 2L && (has_year_columns || has_long_pair)
+  )
+}
+```
+
+
+
+
+## 3. Build the reference ladder
+
+```{r}
+#| label: references
+
+reference_files <- c(
+  fs::dir_ls(canonical_dir, type = "file", fail = FALSE),
+  fs::dir_ls(precanonical_dir, type = "file", fail = FALSE)
+)
+reference_files <- reference_files[tolower(fs::path_ext(reference_files)) %in% supported_extensions]
+
+reference_tables <- dplyr::bind_rows(lapply(reference_files, function(path) {
+  tables <- read_tables(path)
+  if (!length(tables)) return(tibble::tibble())
+  dplyr::bind_rows(lapply(names(tables), function(sheet) {
+    p <- profile_table(tables[[sheet]])
+    dplyr::bind_cols(tibble::tibble(
+      reference_path = fs::path_abs(path),
+      reference_file = fs::path_file(path),
+      reference_sheet = sheet,
+      reference_class = if (startsWith(fs::path_abs(path), paste0(canonical_dir, "/")))
+        "canonical" else "pre-canonical",
+      byte_sha256 = digest::digest(file = path, algo = "sha256"),
+      content_sha256 = table_fingerprint(tables[[sheet]])
+    ), p)
+  }))
+}))
+
+readr::write_csv(reference_tables,
+                 fs::path(output_dir, "scuc_reference_table_fingerprints.csv"), na = "")
+reference_tables
+```
+
+
+
+
+## 4. Enumerate and structurally screen candidates
+
+The audit does not assume that filenames are reliable. A table is included when either its path contains a strong Snapshot phrase or its columns resemble the canonical Snapshot schema. Generic SCUC datasets about bonds, surveys, or Census data are therefore reported as screened-out instead of being mixed into the canonical comparison.
+
+```{r}
+#| label: candidates
+
+all_files <- fs::dir_ls(search_root, recurse = TRUE, type = "file", all = TRUE, fail = FALSE)
+relative <- fs::path_rel(all_files, search_root)
+parts <- stringr::str_split(relative, "[/\\\\]")
+excluded <- vapply(parts, function(x) any(tolower(x) %in% tolower(excluded_directory_names)), logical(1))
+supported <- tolower(fs::path_ext(all_files)) %in% supported_extensions
+not_reference <- !startsWith(fs::path_abs(all_files), paste0(recovery_root, "/01 reference canonical/")) &
+  !startsWith(fs::path_abs(all_files), paste0(recovery_root, "/02 reference pre-canonical/"))
+outside_recovery_project <- !startsWith(fs::path_abs(all_files), paste0(recovery_root, "/"))
+filename_scope_signal <- grepl("scuc|snapshot", tolower(fs::path_file(all_files)))
+lightweight_structural_scan <-
+  grepl("scuc", tolower(all_files)) &
+  tolower(fs::path_ext(all_files)) %in% c("csv", "tsv")
+path_scope_signal <- filename_scope_signal | lightweight_structural_scan
+paths <- all_files[!excluded & supported & not_reference & outside_recovery_project & path_scope_signal]
+
+candidate_tables <- dplyr::bind_rows(lapply(paths, function(path) {
+  cat("Inspecting:", fs::path_rel(path, search_root), "\n")
+  flush.console()
+  tables <- read_tables(path)
+  read_error <- attr(tables, "read_error")
+  if (!length(tables)) {
+    return(tibble::tibble(
+      source_path = fs::path_abs(path), source_relative_path = fs::path_rel(path, search_root),
+      source_file = fs::path_file(path), source_sheet = NA_character_, rows = NA_integer_,
+      columns = NA_integer_, normalized_columns = NA_character_, identity_column_count = NA_integer_,
+      has_year_columns = NA, has_long_pair = NA, structural_snapshot_signal = FALSE,
+      filename_snapshot_signal = grepl("scuc.*snapshot|snapshot.*scuc", tolower(fs::path_file(path))),
+      read_error = ifelse(is.null(read_error), "No readable table", read_error),
+      byte_sha256 = digest::digest(file = path, algo = "sha256"), content_sha256 = NA_character_
+    ))
+  }
+  dplyr::bind_rows(lapply(names(tables), function(sheet) {
+    x <- tables[[sheet]]
+    p <- profile_table(x)
+    dplyr::bind_cols(tibble::tibble(
+      source_path = fs::path_abs(path),
+      source_relative_path = fs::path_rel(path, search_root),
+      source_file = fs::path_file(path), source_sheet = sheet,
+      filename_snapshot_signal = grepl("scuc.*snapshot|snapshot.*scuc", tolower(fs::path_file(path))),
+      read_error = NA_character_, byte_sha256 = digest::digest(file = path, algo = "sha256"),
+      content_sha256 = table_fingerprint(x)
+    ), p)
+  }))
+})) |>
+  dplyr::mutate(in_scope = filename_snapshot_signal | structural_snapshot_signal)
+
+screening_summary <- candidate_tables |>
+  dplyr::count(in_scope, read_failed = !is.na(read_error), sort = TRUE)
+screening_summary
+```
+
+
+
+
+## 5. Classify exact matches and earlier variants
+
+Priority is canonical match, then pre-canonical match, then an earlier/unmatched Snapshot variant. Matching is based on the best sheet in a workbook. Files already inside this recovery project are inventoried but are not staged again.
+
+```{r}
+#| label: classify
+
+sheet_matches <- candidate_tables |>
+  dplyr::filter(in_scope) |>
+  dplyr::left_join(
+    reference_tables |>
+      dplyr::select(reference_file, reference_sheet, reference_class,
+                    reference_byte_sha256 = byte_sha256,
+                    reference_content_sha256 = content_sha256,
+                    reference_rows = rows, reference_columns = columns,
+                    reference_normalized_columns = normalized_columns),
+    by = c("content_sha256" = "reference_content_sha256"),
+    relationship = "many-to-many"
+  ) |>
+  dplyr::mutate(
+    byte_exact = !is.na(reference_file) & byte_sha256 == reference_byte_sha256,
+    content_exact = !is.na(reference_file),
+    match_rank = dplyr::case_when(
+      reference_class == "canonical" & byte_exact ~ 1L,
+      reference_class == "canonical" & content_exact ~ 2L,
+      reference_class == "pre-canonical" & byte_exact ~ 3L,
+      reference_class == "pre-canonical" & content_exact ~ 4L,
+      TRUE ~ 5L
+    )
+  )
+
+best_sheet <- sheet_matches |>
+  dplyr::group_by(source_path) |>
+  dplyr::arrange(match_rank, dplyr::desc(rows), source_sheet, .by_group = TRUE) |>
+  dplyr::slice(1L) |>
+  dplyr::ungroup() |>
+  dplyr::mutate(
+    classification = dplyr::case_when(
+      reference_class == "canonical" ~ "06 canonical data set matches",
+      reference_class == "pre-canonical" ~ "07 pre-canonical set matches",
+      TRUE ~ "08 datasets prior to pre-canonical set matches"
+    ),
+    match_basis = dplyr::case_when(
+      reference_class == "canonical" & byte_exact ~ "byte-exact canonical",
+      reference_class == "canonical" ~ "content-exact canonical",
+      reference_class == "pre-canonical" & byte_exact ~ "byte-exact pre-canonical",
+      reference_class == "pre-canonical" ~ "content-exact pre-canonical",
+      TRUE ~ "no exact reference-table match"
+    ),
+    already_in_recovery_project = startsWith(source_path, paste0(recovery_root, "/")),
+    copy_eligible = !already_in_recovery_project,
+    proposed_destination = fs::path(
+      recovery_root, classification, fs::path_rel(source_path, search_root)
+    ),
+    source_exists_at_audit = fs::file_exists(source_path),
+    review_decision = dplyr::case_when(
+      classification == "06 canonical data set matches" ~ "replace use with named canonical reference",
+      classification == "07 pre-canonical set matches" ~ "retain as documented predecessor; use canonical for analysis",
+      TRUE ~ "review for archive or deletion after confirming it predates the pre-canonical file"
+    ),
+    reviewer_note = ""
+  ) |>
+  dplyr::select(
+    classification, match_basis, source_path, source_relative_path, source_file, source_sheet,
+    rows, columns, byte_sha256, content_sha256, reference_file, reference_sheet,
+    already_in_recovery_project, copy_eligible, proposed_destination,
+    source_exists_at_audit, review_decision, reviewer_note
+  ) |>
+  dplyr::arrange(classification, source_relative_path)
+
+readr::write_csv(best_sheet, fs::path(output_dir, "scuc_dataset_match_manifest.csv"), na = "")
+readr::write_csv(candidate_tables,
+                 fs::path(output_dir, "scuc_dataset_sheet_screening_detail.csv"), na = "")
+
+best_sheet |>
+  dplyr::count(classification, match_basis, copy_eligible, sort = TRUE)
+
+```
+
+
+
+
+## 6. Review reports
+
+```{r}
+#| label: reports
+
+unmatched <- best_sheet |>
+  dplyr::filter(classification == "08 datasets prior to pre-canonical set matches") |>
+  dplyr::select(source_relative_path, source_sheet, rows, columns, review_decision, reviewer_note)
+
+screened_out_scuc <- candidate_tables |>
+  dplyr::filter(!in_scope, grepl("scuc", tolower(source_path))) |>
+  dplyr::select(source_relative_path, source_sheet, rows, columns, normalized_columns, read_error)
+
+readr::write_csv(unmatched, fs::path(output_dir, "scuc_unmatched_snapshot_review.csv"), na = "")
+readr::write_csv(screened_out_scuc, fs::path(output_dir, "scuc_screened_out_non_snapshot_data.csv"), na = "")
+
+unmatched
+
+```
+
+
+
+
+## Interpretation
+
+- **06**: the file contains the same table as a canonical reference. Replace downstream use with the named canonical file.
+
+- **07**: the file contains the same table as a known pre-canonical reference—the direct predecessor that became canonical.
+
+- **08**: it looks like an SCUC Snapshot dataset but does not exactly match either reference tier. Review this smaller group before archiving or deletion.
+
+- A workbook may contain several sheets; the manifest records the sheet that produced its strongest classification.
+
+- Nothing in this audit proves that an unmatched file is safe to delete.
+
+
