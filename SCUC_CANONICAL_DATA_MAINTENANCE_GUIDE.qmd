@@ -1,0 +1,320 @@
+---
+title: "SCUC Canonical Data Repository and Maintenance Guide"
+subtitle: "Where the data live and how to add future Texas Education Agency updates"
+format:
+  html:
+    toc: true
+    number-sections: true
+editor: source
+---
+
+## The governing rule
+
+`01 reference canonical` is the single authoritative library for the SCUC
+Snapshot datasets. Analytical books and scripts should read data from that
+folder, or use a clearly identified copy of one of those files inside a
+project. 
+
+They should not treat files in folders `02`, `03`, or `06` through
+`08` as current production data.
+
+A canonical file is an approved release, not a file that happens to have the
+newest modification date. Do not silently edit or overwrite a canonical file.
+When new TEA information changes the data, create and validate a new canonical
+release, retain the earlier release, and deliberately update dependent code.
+
+
+
+## Repository map
+
+| Location | Purpose | Use for current analysis? |
+|---|---|---|
+| `01 reference canonical` | Authoritative, approved wide and long SCUC Snapshot releases, associated RDS files, and metric registries | **Yes** |
+| `02 reference pre-canonical` | Important inputs that directly preceded a canonical release and explain its lineage | No |
+| `03 incoming TEA updates` | Unchanged TEA downloads, source notes, and work in progress for a future release | No |
+| `04 project inventory outputs` | Audit manifest, fingerprints, copy log, and review tables produced by `00` and `01` | No |
+| `05 dependency and cleanup reports` | Reports showing which projects refer to old data and what cleanup remains | No |
+| `06 canonical data set matches` | Provenance-preserving copies of duplicates that matched canonical data | No; replace their use with folder `01` canonical releases |
+| `07 pre-canonical set matches` | Copies that matched known pre-canonical data | No |
+| `08 datasets prior to pre-canonical set matches` | Earlier, unmatched, historical, or separately retained datasets | No; investigate individually |
+
+Folders `06` through `08` are recovery evidence. They show what was found and
+where it came from. They are not additional canonical libraries.
+
+
+
+## Current canonical naming scheme
+
+Canonical filenames identify the covered years, shape, and status. Examples:
+
+- `SCUC_Snapshots_1995_to_2023_LONG_CANONICAL.csv`
+- `SCUC_Snapshots_1995_to_2023_WIDE_CANONICAL.csv`
+- `SCUC_Snapshots_1995_to_2023_LONG_CANONICAL.rds`
+- `SCUC_Snapshots_1995_to_2023_LONG_metric_registry_CANONICAL.csv`
+
+Use underscores consistently. A new release through 2024 should use `2024` in
+the filename; it should not overwrite the release through 2023. Wide and long
+files bearing the same year range are two representations of the same release.
+
+
+
+## Adding new TEA information to an existing series
+
+### 0. Use 03 incoming TEA updates as a temporary workbench organized first by dataset family, then by dated intake. The 03 begins with the number zero, not the letter O.
+
+```text
+03 incoming TEA updates/
+│
+├── README.md
+│
+├── 01 SCUC Snapshots/
+│   ├── README.md
+│   │
+│   ├── 2026-07-23 2024 Snapshot update/
+│   │   ├── 01 raw TEA source/
+│   │   │   ├── 2024-district-report.xlsx
+│   │   │   └── source-note.md
+│   │   │
+│   │   ├── 02 working files/
+│   │   │   ├── extracted-2024-snapshot.csv
+│   │   │   └── cleaning-notes.md
+│   │   │
+│   │   ├── 03 candidate canonical/
+│   │   │   ├── SCUC_Snapshots_1995_to_2024_LONG_CANDIDATE.csv
+│   │   │   ├── SCUC_Snapshots_1995_to_2024_WIDE_CANDIDATE.csv
+│   │   │   ├── SCUC_Snapshots_1995_to_2024_LONG_CANDIDATE.rds
+│   │   │   └── SCUC_Snapshots_1995_to_2024_metric_registry_CANDIDATE.csv
+│   │   │
+│   │   └── 04 validation/
+│   │       ├── validation-report.html
+│   │       ├── historical-value-comparison.csv
+│   │       ├── wide-long-equivalence.csv
+│   │       └── approval-note.md
+│   │
+│   └── 2027-08-15 2025 Snapshot update/
+│       ├── 01 raw TEA source/
+│       ├── 02 working files/
+│       ├── 03 candidate canonical/
+│       └── 04 validation/
+│
+├── 02 Student Assessments/
+│   ├── README.md
+│   │
+│   ├── STAAR/
+│   │   └── 2026-09-10 grades 3-8 results/
+│   │       ├── 01 raw TEA source/
+│   │       ├── 02 working files/
+│   │       ├── 03 candidate canonical/
+│   │       │   ├── SCUC_STAAR_2012_to_2026_LONG_CANDIDATE.csv
+│   │       │   ├── SCUC_STAAR_2012_to_2026_WIDE_CANDIDATE.csv
+│   │       │   └── SCUC_STAAR_metric_registry_CANDIDATE.csv
+│   │       └── 04 validation/
+│   │
+│   └── SAT and ACT/
+│       └── 2026-11-01 college admissions update/
+│           ├── 01 raw TEA source/
+│           ├── 02 working files/
+│           ├── 03 candidate canonical/
+│           └── 04 validation/
+│
+├── 03 Enrollment and Demographics/
+│   └── 2026-10-05 enrollment update/
+│       ├── 01 raw TEA source/
+│       ├── 02 working files/
+│       ├── 03 candidate canonical/
+│       │   ├── SCUC_Enrollment_1995_to_2026_LONG_CANDIDATE.csv
+│       │   └── SCUC_Enrollment_1995_to_2026_WIDE_CANDIDATE.csv
+│       └── 04 validation/
+│
+├── 04 Finance/
+│   └── 2026-12-15 financial actuals update/
+│       ├── 01 raw TEA source/
+│       ├── 02 working files/
+│       ├── 03 candidate canonical/
+│       └── 04 validation/
+│
+├── 05 Accountability Ratings/
+│   └── 2027-01-20 accountability release/
+│       ├── 01 raw TEA source/
+│       ├── 02 working files/
+│       ├── 03 candidate canonical/
+│       └── 04 validation/
+│
+└── 99 Unclassified incoming/
+    └── 2026-08-12 unidentified TEA workbook/
+        ├── 01 raw TEA source/
+        └── intake-note.md
+```
+        
+Each intake folder follows the same four-stage pattern:
+
+```text
+dated intake/
+├── 01 raw TEA source/       Original files—never edited
+├── 02 working files/        Extracted and cleaned intermediate files
+├── 03 candidate canonical/  Complete proposed canonical release
+└── 04 validation/           Tests, comparisons, decisions, and approval
+```
+
+The source-note.md should record:
+
+```markdown
+# Source note
+
+- Dataset family:
+- TEA report title:
+- Source URL:
+- Date downloaded:
+- Date published:
+- Years covered:
+- Original filenames:
+- What one row represents:
+- Relevant tables or worksheets:
+- Suppression or missing-value symbols:
+- Known TEA revisions:
+- Intended canonical dataset:
+- Notes:
+```
+
+The lifecycle would be:
+
+```text
+03 incoming TEA updates
+        ↓ validate and approve
+01 reference canonical
+        ↓ preserve immediate predecessor
+02 reference pre-canonical
+```
+
+Once a candidate is approved, copies receive CANONICAL names in 01 reference canonical. The entire dated intake folder remains in 03 as the source and validation record, but analytical projects use only the approved version from 01.
+
+
+
+
+### 1. Preserve the source
+
+Create a dated subfolder under `03 incoming TEA updates`. Save the original TEA
+download there unchanged. Add a short Markdown note recording:
+
+- TEA page or report URL;
+- download date;
+- school years covered;
+- tables or measures used;
+- any definitions, suppression symbols, or revisions noted by TEA.
+
+Never use an edited download as the only copy of the source evidence.
+
+### 2. Build a candidate release
+
+Start from the latest canonical release in `01 reference canonical`, then add or
+revise the required records in a separate working file inside the dated folder
+under `03`. Keep the established schema and metric names unless a documented
+change is necessary.
+
+Produce the complete candidate release—not merely a file containing the new
+year. Generate both long and wide forms from the same cleaned data, plus an RDS
+and updated metric registry when those companion files apply.
+
+### 3. Validate before promotion
+
+At minimum, confirm that:
+
+- required columns and data types match the established schema;
+- the year range and row counts are plausible;
+- keys that are supposed to be unique have no duplicates;
+- wide and long forms contain the same observations after reshaping;
+- all historical values that TEA did not revise remain unchanged;
+- missing, suppressed, percentage, score, count, and currency values are
+  represented consistently;
+- every intentional revision is documented;
+- representative charts or summaries still run.
+
+If validation fails, the candidate remains in `03`; it does not enter `01`.
+
+### 4. Promote without overwriting history
+
+After approval, copy the validated release into `01 reference canonical` using
+the canonical naming scheme. Retain the older canonical release. Move or copy
+the final immediate input that became the canonical release into
+`02 reference pre-canonical`, labeling it `SUPERSEDED` and preserving its date
+and lineage.
+
+Only files in `01 reference canonical` may receive `CANONICAL` in their names.
+
+### 5. Update dependent projects deliberately
+
+Search the working directory for references to the prior canonical filename.
+Change each active project to the new canonical release only when that project
+should incorporate the new information. Build or render each affected project
+and commit it separately.
+
+Then render these recovery workbooks in order:
+
+1. `00_scuc_dataset_match_audit.qmd` — rediscover and compare SCUC datasets.
+2. `01_scuc_stage_classified_copies.qmd` — stage approved classified copies
+   after reviewing its manifest and settings.
+3. `02_scuc_dependency_scan_cleanup_plan.qmd` — identify remaining code
+   dependencies and cleanup work.
+
+Do not archive an older source merely because a newer canonical release exists.
+First confirm that the older file is hash-verified in recovery storage and that
+no active project still depends on it.
+
+### 6. Commit and mark the release
+
+Commit the new canonical files, source note, registries, audit outputs, and this
+project's updated reports to GitHub. After all affected projects build and the
+cleanup queues are resolved, create a dated annotated Git tag for the release.
+
+## Adding a genuinely different canonical dataset
+
+Not every TEA table belongs in the SCUC Snapshot wide/long series. A dataset is
+separate when it has a different unit of observation, purpose, or schema—for
+example, detailed grade-level TAKS data or a specialized five-year workbook.
+
+For a new canonical family:
+
+1. preserve the original source under a dated subfolder in `03`;
+2. document what one row represents, keys, measures, units, coverage, and TEA
+   provenance;
+3. create an unambiguous family name rather than forcing it into the Snapshot
+   schema;
+4. validate it and create any useful long/wide companions;
+5. place the approved release in a clearly named subfolder under
+   `01 reference canonical` if the number of canonical families makes the root
+   folder confusing;
+6. update the audit workbooks so the new family is compared only with its own
+   references, not with the Snapshot series.
+
+Do not call a separate dataset canonical until its schema, provenance,
+validation rules, and intended users are documented.
+
+## Finding things later
+
+Start here:
+
+- current approved data: `01 reference canonical`;
+- the direct ancestors of approved data: `02 reference pre-canonical`;
+- a new TEA download or unfinished update: `03 incoming TEA updates`;
+- the master discovery decision for files found across the computer:
+  `04 project inventory outputs/scuc_dataset_match_manifest.csv`;
+- dependencies and unresolved cleanup:
+  `05 dependency and cleanup reports/scuc_dependency_scan_and_cleanup_plan.xlsx`;
+- historical copies and provenance: folders `06`, `07`, and `08`.
+
+The HTML rendered from this QMD is the convenient reading copy. This QMD is the
+maintained source of the policy.
+
+## Short decision rule
+
+When a file appears, ask in this order:
+
+1. Is it an unchanged new TEA source? Store it in `03`.
+2. Is it still being cleaned or validated? Keep it in `03`.
+3. Is it the documented, validated, approved release? Promote a newly named
+   version to `01`.
+4. Is it the immediate input that became that release? Preserve it in `02`.
+5. Is it merely identical to something already canonical? Record or stage it in
+   `06` and make projects use the `01` version.
+6. Is it older or unmatched? Preserve it in `08` until its disposition is
+   documented.

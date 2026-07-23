@@ -1,5 +1,9 @@
 # Simplified SCUC dataset-match workflow
 
+For the permanent repository map and the procedure for incorporating future
+Texas Education Agency updates, see
+`SCUC_CANONICAL_DATA_MAINTENANCE_GUIDE.qmd`.
+
 The recovery project now has two purpose-specific workbooks:
 
 1. `00_scuc_dataset_match_audit.qmd` searches `/Users/D/R Working Directory`, screens for plausible SCUC Snapshot tables, compares their normalized contents with all canonical and pre-canonical references, and writes reports. It is read-only with respect to source data.
