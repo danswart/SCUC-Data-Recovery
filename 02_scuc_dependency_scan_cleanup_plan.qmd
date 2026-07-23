@@ -1,0 +1,333 @@
+---
+title: "SCUC Dependency Scan and Cleanup Plan"
+subtitle: "Find active references before archiving any original dataset"
+format:
+  html:
+    toc: true
+    code-fold: true
+    df-print: paged
+execute:
+  warning: false
+  message: false
+  error: false
+editor: source
+---
+
+## Purpose and safety boundary
+
+This workbook scans source-code and project-configuration files under `/Users/D/R Working Directory` for references to the 39 original datasets in the approved match manifest. It produces a dependency report and a conservative cleanup plan.
+
+It does **not** edit code, move files, archive files, or delete anything.
+
+Dependency confidence is deliberately conservative:
+
+- **certain**: the code contains the original absolute or relative path;
+- **likely**: the original filename appears in code inside the same top-level project;
+- **ambiguous**: only the filename appears elsewhere and may refer to another copy.
+
+## 1. Settings
+
+```{r}
+#| label: settings
+
+recovery_root <- fs::path_abs(getwd())
+search_root <- fs::path_abs(fs::path(recovery_root, ".."))
+manifest_path <- fs::path(recovery_root, "04 project inventory outputs", "scuc_dataset_match_manifest.csv")
+copy_log_path <- fs::path(recovery_root, "04 project inventory outputs", "scuc_dataset_copy_log.csv")
+report_dir <- fs::path(recovery_root, "05 dependency and cleanup reports")
+
+source_extensions <- c(
+  "r", "rmd", "qmd", "md", "yml", "yaml", "json", "toml", "txt", "sh"
+)
+
+excluded_directory_names <- c(
+  ".git", ".Rproj.user", ".quarto", "_freeze", "_site", "renv", "packrat",
+  "node_modules", "library", "history_archive", "history_review",
+  "SCUC_discovery_review", "04 project inventory outputs",
+  "05 dependency and cleanup reports", "06 canonical data set matches",
+  "07 pre-canonical set matches", "08 datasets prior to pre-canonical set matches"
+)
+
+if (!fs::file_exists(manifest_path)) stop("Missing approved manifest: ", manifest_path)
+if (!fs::file_exists(copy_log_path)) stop("Missing verified copy log: ", copy_log_path)
+fs::dir_create(report_dir, recurse = TRUE)
+
+tibble::tibble(
+  setting = c("Search root", "Manifest", "Report folder"),
+  value = c(search_root, manifest_path, report_dir)
+)
+```
+
+## 2. Load and verify the approved staging records
+
+```{r}
+#| label: verified-manifest
+
+manifest <- readr::read_csv(manifest_path, show_col_types = FALSE, progress = FALSE)
+copy_log <- readr::read_csv(copy_log_path, show_col_types = FALSE, progress = FALSE)
+
+required_manifest <- c(
+  "classification", "source_path", "source_relative_path", "source_file",
+  "proposed_destination", "reference_file"
+)
+missing_manifest <- setdiff(required_manifest, names(manifest))
+if (length(missing_manifest)) stop("Manifest is missing: ", paste(missing_manifest, collapse = ", "))
+if (!all(copy_log$verified_copy)) stop("At least one staged copy is not hash-verified; stop cleanup planning")
+
+top_project <- function(path) {
+  relative <- fs::path_rel(fs::path_abs(path), search_root)
+  strsplit(as.character(relative), "[/\\\\]")[[1]][1]
+}
+
+manifest <- manifest |>
+  dplyr::mutate(
+    source_project = vapply(source_path, top_project, character(1)),
+    source_exists_now = fs::file_exists(source_path),
+    staged_copy_exists_now = fs::file_exists(proposed_destination),
+    staged_copy_verified = source_path %in% copy_log$source_path[copy_log$verified_copy]
+  )
+
+manifest |>
+  dplyr::count(classification, source_exists_now, staged_copy_exists_now, staged_copy_verified)
+```
+
+## 3. Enumerate source and configuration files
+
+Generated HTML, JavaScript, CSS, package libraries, caches, the recovery repository, and staged data folders are excluded. The scan targets editable source and configuration files where a data dependency can be changed deliberately.
+
+```{r}
+#| label: source-files
+
+all_code <- fs::dir_ls(search_root, recurse = TRUE, type = "file", all = TRUE, fail = FALSE)
+relative_code <- fs::path_rel(all_code, search_root)
+parts <- stringr::str_split(relative_code, "[/\\\\]")
+
+is_excluded <- vapply(parts, function(x) {
+  any(tolower(x) %in% tolower(excluded_directory_names))
+}, logical(1))
+
+outside_recovery_repo <- !startsWith(fs::path_abs(all_code), paste0(recovery_root, "/")) &
+  !grepl("[/\\\\]SCUC Data Recovery - Superseded[/\\\\]", all_code)
+
+code_files <- all_code[
+  !is_excluded & outside_recovery_repo &
+    tolower(fs::path_ext(all_code)) %in% source_extensions
+]
+
+code_inventory <- tibble::tibble(
+  code_path = fs::path_abs(code_files),
+  code_relative_path = fs::path_rel(code_files, search_root),
+  code_project = vapply(code_files, top_project, character(1)),
+  extension = tolower(fs::path_ext(code_files)),
+  size_bytes = as.numeric(fs::file_info(code_files)$size)
+) |>
+  dplyr::filter(size_bytes <= 10 * 1024^2)
+
+code_inventory |>
+  dplyr::count(extension, sort = TRUE)
+```
+
+## 4. Scan for dependencies
+
+```{r}
+#| label: dependency-scan
+
+read_text_lines <- function(path) {
+  tryCatch(
+    readLines(path, warn = FALSE, encoding = "UTF-8"),
+    error = function(e) character()
+  )
+}
+
+dependency_hits <- dplyr::bind_rows(lapply(seq_len(nrow(code_inventory)), function(i) {
+  code <- code_inventory[i, ]
+  lines <- read_text_lines(code$code_path)
+  if (!length(lines)) return(tibble::tibble())
+
+  dplyr::bind_rows(lapply(seq_len(nrow(manifest)), function(j) {
+    item <- manifest[j, ]
+    absolute_hit <- grepl(item$source_path, lines, fixed = TRUE)
+    relative_hit <- grepl(item$source_relative_path, lines, fixed = TRUE)
+    filename_hit <- grepl(item$source_file, lines, fixed = TRUE)
+    hit_lines <- which(absolute_hit | relative_hit | filename_hit)
+    if (!length(hit_lines)) return(tibble::tibble())
+
+    confidence <- dplyr::case_when(
+      any(absolute_hit[hit_lines] | relative_hit[hit_lines]) ~ "certain",
+      as.character(code$code_project) == as.character(item$source_project) ~ "likely",
+      TRUE ~ "ambiguous"
+    )
+    match_basis <- dplyr::case_when(
+      any(absolute_hit[hit_lines]) ~ "absolute source path",
+      any(relative_hit[hit_lines]) ~ "relative source path",
+      TRUE ~ "filename only"
+    )
+
+    tibble::tibble(
+      source_path = item$source_path,
+      source_file = item$source_file,
+      source_project = item$source_project,
+      classification = item$classification,
+      reference_file = item$reference_file,
+      code_path = code$code_path,
+      code_relative_path = code$code_relative_path,
+      code_project = code$code_project,
+      dependency_confidence = confidence,
+      match_basis = match_basis,
+      line_number = hit_lines,
+      line_excerpt = substr(trimws(lines[hit_lines]), 1L, 500L)
+    )
+  }))
+})) |>
+  dplyr::distinct()
+
+readr::write_csv(
+  dependency_hits,
+  fs::path(report_dir, "scuc_dependency_hits.csv"),
+  na = ""
+)
+
+dependency_hits |>
+  dplyr::count(dependency_confidence, match_basis, sort = TRUE)
+```
+
+## 5. Recommend canonical targets
+
+For exact canonical matches, the manifest supplies the authoritative target. For pre-canonical and earlier files, the suggested target is inferred from year coverage and wide/long form. An inferred target is a review aid, not proof of interchangeability.
+
+```{r}
+#| label: targets
+
+canonical_target <- function(classification, reference_file, source_file) {
+  if (classification == "06 canonical data set matches" && !is.na(reference_file)) {
+    return(fs::path(recovery_root, "01 reference canonical", reference_file))
+  }
+  if (classification == "08 datasets prior to pre-canonical set matches") {
+    return(NA_character_)
+  }
+  text <- tolower(source_file)
+  year <- if (grepl("2023", text)) "2023" else "2022"
+  form <- if (grepl("wide", text)) "WIDE" else "LONG"
+  target_name <- paste0("SCUC_Snapshots_1995_to_", year, "_", form, "_CANONICAL.csv")
+  fs::path(recovery_root, "01 reference canonical", target_name)
+}
+
+manifest <- manifest |>
+  dplyr::mutate(
+    recommended_canonical_target = mapply(
+      canonical_target, classification, reference_file, source_file,
+      USE.NAMES = FALSE
+    ),
+    canonical_target_exists = !is.na(recommended_canonical_target) &
+      fs::file_exists(recommended_canonical_target)
+  )
+```
+
+## 6. Create the cleanup plan
+
+Only `certain` and `likely` hits block archival. Ambiguous filename-only hits are reported for review but do not by themselves prove that a particular original is in use.
+
+```{r}
+#| label: cleanup-plan
+
+dependency_summary <- dependency_hits |>
+  dplyr::group_by(source_path) |>
+  dplyr::summarise(
+    certain_hits = sum(dependency_confidence == "certain"),
+    likely_hits = sum(dependency_confidence == "likely"),
+    ambiguous_hits = sum(dependency_confidence == "ambiguous"),
+    active_code_files = dplyr::n_distinct(code_path[dependency_confidence %in% c("certain", "likely")]),
+    active_projects = paste(sort(unique(code_project[dependency_confidence %in% c("certain", "likely")])),
+                            collapse = "; "),
+    .groups = "drop"
+  )
+
+cleanup_plan <- manifest |>
+  dplyr::left_join(dependency_summary, by = "source_path") |>
+  dplyr::mutate(
+    dplyr::across(c(certain_hits, likely_hits, ambiguous_hits, active_code_files),
+                  ~ tidyr::replace_na(.x, 0L)),
+    active_projects = tidyr::replace_na(active_projects, ""),
+    has_active_dependency = certain_hits + likely_hits > 0L,
+    cleanup_status = dplyr::case_when(
+      classification == "06 canonical data set matches" & has_active_dependency ~
+        "BLOCKED: update code to canonical target, test project, then archive original",
+      classification == "06 canonical data set matches" ~
+        "READY FOR ARCHIVE after backup approval; exact canonical replacement exists",
+      classification == "07 pre-canonical set matches" & has_active_dependency ~
+        "BLOCKED: update active code to canonical target; retain documented predecessor in folder 02",
+      classification == "07 pre-canonical set matches" ~
+        "READY FOR ARCHIVE after backup approval; reference predecessor remains in folder 02",
+      classification == "08 datasets prior to pre-canonical set matches" & has_active_dependency ~
+        "RETAIN AND INVESTIGATE: active dependency exists; do not archive or delete",
+      TRUE ~
+        "ARCHIVE CANDIDATE: unmatched historical variant; manual approval required; do not delete"
+    ),
+    proposed_action = dplyr::case_when(
+      classification == "08 datasets prior to pre-canonical set matches" & has_active_dependency ~
+        "retain and investigate; no canonical replacement assumed",
+      has_active_dependency ~ "replace/test before archive",
+      classification %in% c("06 canonical data set matches", "07 pre-canonical set matches") ~
+        "archive original after backup approval",
+      TRUE ~ "archive for historical review; no deletion authorized"
+    ),
+    deletion_authorized = FALSE,
+    owner_decision = "pending",
+    owner_note = ""
+  ) |>
+  dplyr::select(
+    classification, source_path, source_file, source_project, source_exists_now,
+    proposed_destination, staged_copy_exists_now, staged_copy_verified,
+    recommended_canonical_target, canonical_target_exists,
+    certain_hits, likely_hits, ambiguous_hits, active_code_files, active_projects,
+    has_active_dependency, cleanup_status, proposed_action,
+    deletion_authorized, owner_decision, owner_note
+  ) |>
+  dplyr::arrange(dplyr::desc(has_active_dependency), classification, source_project, source_file)
+
+readr::write_csv(cleanup_plan, fs::path(report_dir, "scuc_cleanup_plan.csv"), na = "")
+
+if (requireNamespace("openxlsx", quietly = TRUE)) {
+  workbook <- openxlsx::createWorkbook()
+  openxlsx::addWorksheet(workbook, "Cleanup plan")
+  openxlsx::writeData(workbook, "Cleanup plan", cleanup_plan)
+  openxlsx::freezePane(workbook, "Cleanup plan", firstRow = TRUE)
+  openxlsx::setColWidths(workbook, "Cleanup plan", cols = 1:ncol(cleanup_plan), widths = "auto")
+  openxlsx::addWorksheet(workbook, "Dependency hits")
+  openxlsx::writeData(workbook, "Dependency hits", dependency_hits)
+  openxlsx::freezePane(workbook, "Dependency hits", firstRow = TRUE)
+  openxlsx::saveWorkbook(
+    workbook, fs::path(report_dir, "scuc_dependency_scan_and_cleanup_plan.xlsx"), overwrite = TRUE
+  )
+}
+
+cleanup_plan |>
+  dplyr::count(classification, has_active_dependency, cleanup_status, sort = TRUE)
+```
+
+## 7. Safe execution order
+
+```{r}
+#| label: execution-queue
+
+replacement_queue <- cleanup_plan |>
+  dplyr::filter(has_active_dependency) |>
+  dplyr::arrange(classification, source_project, source_file)
+
+archive_queue <- cleanup_plan |>
+  dplyr::filter(!has_active_dependency) |>
+  dplyr::arrange(classification, source_project, source_file)
+
+readr::write_csv(replacement_queue, fs::path(report_dir, "scuc_code_replacement_queue.csv"), na = "")
+readr::write_csv(archive_queue, fs::path(report_dir, "scuc_archive_candidate_queue.csv"), na = "")
+
+replacement_queue
+```
+
+## Interpretation
+
+1. Work through the code-replacement queue first.
+2. For each affected project, change the data path to the recommended canonical target and test that project.
+3. Re-run this dependency scan; the old file should then have no certain or likely hits.
+4. Archive only after a backup exists and the staged copy remains verified.
+5. No deletion is authorized by this workbook. Deletion requires a separate reviewed plan.

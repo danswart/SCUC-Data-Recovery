@@ -15,6 +15,10 @@ Copies retain their path relative to `/Users/D/R Working Directory`, so identica
 
 No workbook deletes, moves, or renames originals.
 
+## Dependency and cleanup phase
+
+After staging is verified, render `02_scuc_dependency_scan_cleanup_plan.qmd`. It scans editable source and configuration files for references to the 39 originals and writes a read-only cleanup plan to `05 dependency and cleanup reports`. Resolve the code-replacement queue before archiving originals. The workbook never authorizes deletion.
+
 Implemented and validated a two-workbook workflow.
 
 [00_scuc_dataset_match_audit.qmd](/Users/D/R Working Directory/SCUC Data Recovery/00_scuc_dataset_match_audit.qmd) 
